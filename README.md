@@ -24,7 +24,7 @@ The sqlshell cookbook installs the SqlShell binary and provides LWRPs to execute
 
 # Recipes
 
-* sqlshell::default - Installs and SqlShell binaries
+* sqlshell::default - Installs the SqlShell binaries
 
 # License and Maintainer
 
