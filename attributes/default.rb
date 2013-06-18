@@ -1,5 +1,5 @@
 #
-# Copyright 2012, Peter Donald
+# Copyright Peter Donald
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
 # limitations under the License.
 #
 
-include_recipe 'java::default'
-
-archive 'sqlshell' do
-  url node['sqlshell']['package']['url']
-  version node['sqlshell']['package']['version']
-end
+version = '0.1'
+default['sqlshell']['package']['version'] = version
+default['sqlshell']['package']['url'] = "https://github.com/realityforge/repository/raw/master/org/realityforge/sqlshell/sqlshell/#{version}/sqlshell-#{version}-all.jar"

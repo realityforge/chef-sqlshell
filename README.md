@@ -20,7 +20,8 @@ The sqlshell cookbook installs the SqlShell binary and provides LWRPs to execute
 
 # Attributes
 
-*No attributes defined*
+* `node['sqlshell']['package']['version']` - The version of SqlShell to install. Defaults to `0.1`.
+* `node['sqlshell']['package']['url']` - The url to the omnibus SqlShell jar file. Defaults to `https://github.com/realityforge/repository/raw/master/org/realityforge/sqlshell/sqlshell/0.1/sqlshell-0.1-all.jar`.
 
 # Recipes
 
