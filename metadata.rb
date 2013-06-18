@@ -27,4 +27,4 @@ depends 'cutlery'
 depends 'archive'
 depends 'java'
 
-recipe 'sqlshell::default', 'Installs and SqlShell binaries'
+recipe 'sqlshell::default', 'Installs the SqlShell binaries'
