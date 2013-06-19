@@ -34,14 +34,14 @@ action :run do
 
   ruby_block "execute_sql_#{new_resource.name}" do
     block do
-      sql_to_json(new_resource.command, new_resource.command_type, extra_classpath)
+      sql_to_json(new_resource.command, extra_classpath)
     end
     not_if do
-      !sql_to_json(new_resource.not_if_sql, :query, extra_classpath).empty? rescue false
+      !sql_to_json(new_resource.not_if_sql, extra_classpath).empty? rescue false
     end if new_resource.not_if_sql
 
     only_if do
-      !sql_to_json(new_resource.only_if_sql, :query, extra_classpath).empty? rescue false
+      !sql_to_json(new_resource.only_if_sql, extra_classpath).empty? rescue false
     end if new_resource.only_if_sql
   end
 end

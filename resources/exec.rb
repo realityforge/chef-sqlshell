@@ -39,8 +39,6 @@ actions :run
 
 #<> @attribute command The sql command (s) to execute.
 attribute :command, :kind_of => String, :required => true
-#<> @attribute command_type The command type, a query or an update.
-attribute :command_type, :equal_to => [:update, :query], :default => :update
 #<> @attribute not_if_sql Do not execute command if specified sql returns 1 or more rows.
 attribute :not_if_sql, :kind_of => [String, NilClass], :default => nil
 #<> @attribute only_if_sql Only execute command if specified sql returns 1 or more rows.

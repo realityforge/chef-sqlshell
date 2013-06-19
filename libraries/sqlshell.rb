@@ -33,10 +33,9 @@ class Chef
       "#{node['java']['java_home']}/bin/java #{args.join(' ')}"
     end
 
-    def sql_to_json(sql, sql_type, extra_classpath)
+    def sql_to_json(sql, extra_classpath)
       f = Tempfile.new('sqlshell_exec', Chef::Config[:file_cache_path])
       f.write sql
-      f.write "SELECT 'OK' AS Result" if sql_type == :update
       f.flush
       f.close
       begin

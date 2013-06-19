@@ -14,6 +14,6 @@
 # limitations under the License.
 #
 
-version = '0.5'
+version = '0.6'
 default['sqlshell']['package']['version'] = version
 default['sqlshell']['package']['url'] = "https://github.com/realityforge/repository/raw/master/org/realityforge/sqlshell/sqlshell/#{version}/sqlshell-#{version}-all.jar"
