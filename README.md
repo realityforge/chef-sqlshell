@@ -47,18 +47,18 @@ from which the other database automation elements are driven.
 - not_if_sql: Do not execute command if specified sql returns 1 or more rows. Defaults to <code>nil</code>.
 - only_if_sql: Only execute command if specified sql returns 1 or more rows. Defaults to <code>nil</code>.
 - jdbc_url: The jdbc connection url.
-- driver: The class name of the jdbc driver.
+- jdbc_driver: The class name of the jdbc driver.
 - extra_classpath: An array of urls to jars to add to the classpath.
-- properties: A collection of jdbc connection properties. Defaults to <code>{}</code>.
+- jdbc_properties: A collection of jdbc connection properties. Defaults to <code>{}</code>.
 
 ### Examples
 
     # Create a schema if it does not exist
     sqlshell_exec "CREATE SCHEMA c" do
       jdbc_url "jdbc:postgresql://127.0.0.1:5432/mydb"
-      driver 'org.postgresql.Driver'
+      jdbc_driver 'org.postgresql.Driver'
       extra_classpath ['http://jdbc.postgresql.org/download/postgresql-9.2-1002.jdbc4.jar']
-      properties 'user' => 'sa', 'password' => 'secret'
+      jdbc_properties 'user' => 'sa', 'password' => 'secret'
       command "CREATE SCHEMA c"
       not_if_sql "SELECT * FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'c'"
     end

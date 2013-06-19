@@ -26,9 +26,9 @@ from which the other database automation elements are driven.
     # Create a schema if it does not exist
     sqlshell_exec "CREATE SCHEMA c" do
       jdbc_url "jdbc:postgresql://127.0.0.1:5432/mydb"
-      driver 'org.postgresql.Driver'
+      jdbc_driver 'org.postgresql.Driver'
       extra_classpath ['http://jdbc.postgresql.org/download/postgresql-9.2-1002.jdbc4.jar']
-      properties 'user' => 'sa', 'password' => 'secret'
+      jdbc_properties 'user' => 'sa', 'password' => 'secret'
       command "CREATE SCHEMA c"
       not_if_sql "SELECT * FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'c'"
     end
