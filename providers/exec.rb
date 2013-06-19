@@ -17,36 +17,7 @@
 use_inline_resources
 
 include Chef::Mixin::ShellOut
-
-def build_launch_command(input_file, extra_classpath)
-  classpath = [node['sqlshell']['package']['local_archive']] + extra_classpath
-
-  args = []
-  args << '-cp' << classpath.join(':')
-  args << 'org.realityforge.sqlshell.Main'
-  args << '--database-driver' << new_resource.jdbc_driver
-  args << '-f' << input_file
-  new_resource.jdbc_properties.each_pair do |key, value|
-    args << '--database-property' << "#{key}=#{value}"
-  end
-  args << "'#{new_resource.jdbc_url}'"
-
-  "#{node['java']['java_home']}/bin/java #{args.join(' ')}"
-end
-
-def sql_to_json(sql, sql_type, extra_classpath)
-  f = Tempfile.new('sqlshell_exec', Chef::Config[:file_cache_path])
-  f.write sql
-  f.write "SELECT 'OK' AS Result" if sql_type == :update
-  f.flush
-  f.close
-  begin
-    cmd = shell_out!(build_launch_command(f.path, extra_classpath), {:returns => [0]})
-    return JSON.parse(cmd.stdout)
-  ensure
-    f.unlink
-  end
-end
+include Chef::SqlShell
 
 action :run do
 
