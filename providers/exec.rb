@@ -24,9 +24,9 @@ def build_launch_command(input_file, extra_classpath)
   args = []
   args << '-cp' << classpath.join(':')
   args << 'org.realityforge.sqlshell.Main'
-  args << '--database-driver' << new_resource.driver
+  args << '--database-driver' << new_resource.jdbc_driver
   args << '-f' << input_file
-  new_resource.properties.each_pair do |key, value|
+  new_resource.jdbc_properties.each_pair do |key, value|
     args << '--database-property' << "#{key}=#{value}"
   end
   args << "'#{new_resource.jdbc_url}'"

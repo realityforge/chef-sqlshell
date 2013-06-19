@@ -48,11 +48,11 @@ attribute :only_if_sql, :kind_of => [String, NilClass], :default => nil
 
 #<> @attribute jdbc_url The jdbc connection url.
 attribute :jdbc_url, :kind_of => String, :required => true
-#<> @attribute driver The class name of the jdbc driver.
-attribute :driver, :kind_of => String, :required => true
+#<> @attribute jdbc_driver The class name of the jdbc driver.
+attribute :jdbc_driver, :kind_of => String, :required => true
 #<> @attribute extra_classpath An array of urls to jars to add to the classpath.
 attribute :extra_classpath, :kind_of => Array, :required => true
-#<> @attribute properties A collection of jdbc connection properties.
-attribute :properties, :kind_of => Hash, :default => {}
+#<> @attribute jdbc_properties A collection of jdbc connection properties.
+attribute :jdbc_properties, :kind_of => Hash, :default => {}
 
 default_action :run
