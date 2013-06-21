@@ -30,7 +30,14 @@ class Chef
       end
       args << "\"#{new_resource.jdbc_url}\""
 
-      "#{node['java']['java_home']}/bin/java #{args.join(' ')}"
+      java_exe =
+        if node['platform'] == 'windows'
+          "\"#{node['java']['java_home']}\\bin\\java.exe\""
+        else
+          "#{node['java']['java_home']}/bin/java"
+        end
+
+      "#{java_exe} #{args.join(' ')}"
     end
 
     def sql_to_json(sql, extra_classpath)
