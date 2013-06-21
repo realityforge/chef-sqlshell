@@ -28,7 +28,7 @@ class Chef
       new_resource.jdbc_properties.each_pair do |key, value|
         args << '--database-property' << "#{key}=#{value}"
       end
-      args << "'#{new_resource.jdbc_url}'"
+      args << "\"#{new_resource.jdbc_url}\""
 
       "#{node['java']['java_home']}/bin/java #{args.join(' ')}"
     end
