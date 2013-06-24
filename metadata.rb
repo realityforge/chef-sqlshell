@@ -28,6 +28,7 @@ depends 'archive'
 depends 'java'
 
 recipe 'sqlshell::default', 'Installs the SqlShell binaries'
+recipe 'sqlshell::ms_attribute_driven', 'Configures 0 or more SQL Server instances'
 
 attribute 'sqlshell/package/version',
   :display_name => 'SqlShell Version',
