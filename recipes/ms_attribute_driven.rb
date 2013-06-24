@@ -72,7 +72,7 @@ node['sqlshell']['servers'].each_pair do |key, value|
               permission = Chef::AttributeChecker.ensure_attribute(permission_config, 'permission', String, permission_prefix)
               securable_type = Chef::AttributeChecker.ensure_attribute(permission_config, 'securable_type', String, permission_prefix)
               securable = permission_config['securable'] ? Chef::AttributeChecker.ensure_attribute(permission_config, 'securable', String, permission_prefix) : nil
-              permission_action = permission_config['permission_action'] ? Chef::AttributeChecker.ensure_attribute(permission_config, 'permission_action', String, permission_prefix) : 'grant'
+              permission_action = permission_config['permission_action'] ? Chef::AttributeChecker.ensure_attribute(permission_config, 'permission_action', String, permission_prefix) : nil
 
               sqlshell_ms_permission "#{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}" do
                 jdbc_url jdbc_url
@@ -84,7 +84,7 @@ node['sqlshell']['servers'].each_pair do |key, value|
                 securable_type securable_type
                 securable securable
                 permission permission
-                action permission_action.to_sym
+                action permission_action.to_sym if permission_action
               end
             end
           end

@@ -98,6 +98,8 @@ attribute :extra_classpath, :kind_of => Array, :required => true
 #<> @attribute jdbc_properties A collection of jdbc connection properties.
 attribute :jdbc_properties, :kind_of => Hash, :default => {}
 
+default_action :grant
+
 def resolved_securable
   unless @resolved_securable
     if securable_type == 'DATABASE'
