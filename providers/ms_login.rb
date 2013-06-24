@@ -44,7 +44,7 @@ action :create do
     extra_classpath new_resource.extra_classpath
     jdbc_properties new_resource.jdbc_properties
     command "ALTER LOGIN [#{new_resource.login}] WITH #{options.join(', ')}"
-    not_if_sql "SELECT * FROM sys.server_principals WHERE name = '#{new_resource.login}' AND default_database_name = '#{new_resource.default_database}' AND default_database_name = '#{new_resource.default_language}' AND type_desc IN (#{types.collect{|t| "'#{t}'"}.join(', ')})"
+    not_if_sql "SELECT * FROM sys.server_principals WHERE name = '#{new_resource.login}' AND default_database_name = '#{new_resource.default_database}' AND default_language_name = '#{new_resource.default_language}' AND type_desc IN (#{types.collect{|t| "'#{t}'"}.join(', ')})"
   end
 end
 
