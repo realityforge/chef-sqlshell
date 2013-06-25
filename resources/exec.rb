@@ -43,6 +43,14 @@ attribute :command, :kind_of => String, :required => true
 attribute :not_if_sql, :kind_of => [String, NilClass], :default => nil
 #<> @attribute only_if_sql Only execute command if specified sql returns 1 or more rows.
 attribute :only_if_sql, :kind_of => [String, NilClass], :default => nil
+#<> @attribute block The block to invoke for any row results returned. May be nil.
+def block(&block)
+  if block_given? and block
+    @block = block
+  else
+    @block
+  end
+end
 
 #<> @attribute jdbc_url The jdbc connection url.
 attribute :jdbc_url, :kind_of => String, :required => true
