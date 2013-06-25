@@ -90,6 +90,94 @@ node['sqlshell']['servers'].each_pair do |key, value|
           end
         end
       end
+
+      if value['logins']
+
+        sqlshell_exec "Remove historic Server Roles" do
+          jdbc_url jdbc_url
+          jdbc_driver jdbc_driver
+          extra_classpath extra_classpath
+          jdbc_properties jdbc_properties
+          command <<-SQL
+              SELECT
+                P.name, RP.name as role
+              FROM
+                sys.server_principals P
+              JOIN sys.server_role_members SRM ON SRM.member_principal_id = P.principal_id
+              JOIN sys.server_principals RP ON RP.principal_id = SRM.role_principal_id AND RP.type_desc = 'SERVER_ROLE'
+              WHERE
+                P.is_disabled = 0 AND
+                P.name NOT LIKE 'NT AUTHORITY\\%' AND
+                P.name NOT LIKE 'NT SERVICE\\%' AND
+                P.type_desc IN ('SQL_LOGIN', 'WINDOWS_GROUP', 'WINDOWS_LOGIN')
+          SQL
+          block do
+            logins_with_roles = []
+            role_map = {}
+            value['logins'].each_pair do |login, login_config|
+              if login_config['server_roles']
+                logins_with_roles << login
+                role_map[login] = (role_map[login] || []) + login_config['server_roles'].keys
+              end
+            end
+
+            @sql_results.each do |row|
+              next if row['name'] == jdbc_properties['user']
+
+              login = row['name']
+              role = row['role']
+
+              if !logins_with_roles.include?(login) || !(role_map[login] && role_map[login].include?(role))
+
+                Chef::Log.info "Removing historic server role #{role} from #{login}"
+                sqlshell_ms_server_role login do
+                  jdbc_url jdbc_url
+                  jdbc_driver jdbc_driver
+                  extra_classpath extra_classpath
+                  jdbc_properties jdbc_properties
+                  role role
+
+                  action :remove
+                end
+              end
+            end
+          end
+        end
+
+        sqlshell_exec "Remove historic logins" do
+          jdbc_url jdbc_url
+          jdbc_driver jdbc_driver
+          extra_classpath extra_classpath
+          jdbc_properties jdbc_properties
+          command <<-SQL
+            SELECT
+              SP.name, SP.type_desc
+            FROM
+              sys.syslogins L
+            JOIN sys.server_principals SP ON SP.sid = L.sid
+            WHERE
+              SP.type_desc IN ('SQL_LOGIN', 'WINDOWS_GROUP', 'WINDOWS_LOGIN') AND
+              SP.is_disabled = 0 AND
+              SP.name NOT LIKE 'NT AUTHORITY\\%' AND
+              SP.name NOT LIKE 'NT SERVICE\\%'
+          SQL
+          block do
+            @sql_results.each do |row|
+              if value['logins'][row['name']].nil? && row['name'] != jdbc_properties['user']
+                Chef::Log.info "Removing historic login #{row['name']}"
+                sqlshell_ms_login row['name'] do
+                  jdbc_url jdbc_url
+                  jdbc_driver jdbc_driver
+                  extra_classpath extra_classpath
+                  jdbc_properties jdbc_properties
+
+                  action :drop
+                end if node.name == 'DEVsql02.fire.dse.vic.gov.au'
+              end
+            end
+          end
+        end
+      end
     end
   end
 end
