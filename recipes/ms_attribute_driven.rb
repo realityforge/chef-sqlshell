@@ -166,16 +166,23 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
               SP.name NOT LIKE 'NT SERVICE\\%'
           SQL
           block do
-            @sql_results.each do |row|
-              if value['logins'][row['name']].nil? && row['name'] != jdbc_properties['user']
-                Chef::Log.info "Removing historic login #{row['name']}"
-                sqlshell_ms_login row['name'] do
-                  jdbc_url jdbc_url
-                  jdbc_driver jdbc_driver
-                  extra_classpath extra_classpath
-                  jdbc_properties jdbc_properties
+            delete_unmanaged = !value['delete_unmanaged_logins'].is_a?(FalseClass)
 
-                  action :drop
+            @sql_results.each do |row|
+              login = row['name']
+              if value['logins'][login].nil? && login != jdbc_properties['user']
+                if delete_unmanaged
+                  Chef::Log.info "Removing historic login #{login}"
+                  sqlshell_ms_login login do
+                    jdbc_url jdbc_url
+                    jdbc_driver jdbc_driver
+                    extra_classpath extra_classpath
+                    jdbc_properties jdbc_properties
+
+                    action :drop
+                  end
+                else
+                  Chef::Log.error "Unmanaged login #{login} found"
                 end
               end
             end
