@@ -90,101 +90,101 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
           end
         end
       end
+    end
+  end
 
-      if value['logins']
-        sqlshell_exec "Remove historic Server Roles" do
-          jdbc_url jdbc_url
-          jdbc_driver jdbc_driver
-          extra_classpath extra_classpath
-          jdbc_properties jdbc_properties
-          command <<-SQL
-              SELECT
-                P.name, RP.name as role
-              FROM
-                sys.server_principals P
-              JOIN sys.server_role_members SRM ON SRM.member_principal_id = P.principal_id
-              JOIN sys.server_principals RP ON RP.principal_id = SRM.role_principal_id AND RP.type_desc = 'SERVER_ROLE'
-              WHERE
-                P.is_disabled = 0 AND
-                P.name NOT LIKE 'NT AUTHORITY\\%' AND
-                P.name NOT LIKE 'NT SERVICE\\%' AND
-                P.type_desc IN ('SQL_LOGIN', 'WINDOWS_GROUP', 'WINDOWS_LOGIN')
-          SQL
-          block do
-            logins_with_roles = []
-            role_map = {}
-            value['logins'].each_pair do |login, login_config|
-              if login_config['server_roles']
-                logins_with_roles << login
-                role_map[login] = (role_map[login] || []) + login_config['server_roles'].keys
-              end
-            end
-
-            delete_unmanaged = !value['delete_unmanaged_server_roles'].is_a?(FalseClass)
-
-            @sql_results.each do |row|
-              next if row['name'] == jdbc_properties['user']
-
-              login = row['name']
-              role = row['role']
-
-              if !logins_with_roles.include?(login) || !(role_map[login] && role_map[login].include?(role))
-                if delete_unmanaged
-                  Chef::Log.info "Removing historic server role #{role} from #{login}"
-                  sqlshell_ms_server_role login do
-                    jdbc_url jdbc_url
-                    jdbc_driver jdbc_driver
-                    extra_classpath extra_classpath
-                    jdbc_properties jdbc_properties
-                    role role
-
-                    action :remove
-                  end
-                else
-                  Chef::Log.error "Unmanaged server role #{role} from #{login} found"
-                end
-              end
-            end
+  if value['logins']
+    sqlshell_exec "Remove historic Server Roles" do
+      jdbc_url jdbc_url
+      jdbc_driver jdbc_driver
+      extra_classpath extra_classpath
+      jdbc_properties jdbc_properties
+      command <<-SQL
+        SELECT
+          P.name, RP.name as role
+        FROM
+          sys.server_principals P
+        JOIN sys.server_role_members SRM ON SRM.member_principal_id = P.principal_id
+        JOIN sys.server_principals RP ON RP.principal_id = SRM.role_principal_id AND RP.type_desc = 'SERVER_ROLE'
+        WHERE
+          P.is_disabled = 0 AND
+          P.name NOT LIKE 'NT AUTHORITY\\%' AND
+          P.name NOT LIKE 'NT SERVICE\\%' AND
+          P.type_desc IN ('SQL_LOGIN', 'WINDOWS_GROUP', 'WINDOWS_LOGIN')
+      SQL
+      block do
+        logins_with_roles = []
+        role_map = {}
+        value['logins'].each_pair do |login, login_config|
+          if login_config['server_roles']
+            logins_with_roles << login
+            role_map[login] = (role_map[login] || []) + login_config['server_roles'].keys
           end
         end
 
-        sqlshell_exec "Remove historic logins" do
-          jdbc_url jdbc_url
-          jdbc_driver jdbc_driver
-          extra_classpath extra_classpath
-          jdbc_properties jdbc_properties
-          command <<-SQL
-            SELECT
-              SP.name, SP.type_desc
-            FROM
-              sys.syslogins L
-            JOIN sys.server_principals SP ON SP.sid = L.sid
-            WHERE
-              SP.type_desc IN ('SQL_LOGIN', 'WINDOWS_GROUP', 'WINDOWS_LOGIN') AND
-              SP.is_disabled = 0 AND
-              SP.name NOT LIKE 'NT AUTHORITY\\%' AND
-              SP.name NOT LIKE 'NT SERVICE\\%'
-          SQL
-          block do
-            delete_unmanaged = !value['delete_unmanaged_logins'].is_a?(FalseClass)
+        delete_unmanaged = !value['delete_unmanaged_server_roles'].is_a?(FalseClass)
 
-            @sql_results.each do |row|
-              login = row['name']
-              if value['logins'][login].nil? && login != jdbc_properties['user']
-                if delete_unmanaged
-                  Chef::Log.info "Removing historic login #{login}"
-                  sqlshell_ms_login login do
-                    jdbc_url jdbc_url
-                    jdbc_driver jdbc_driver
-                    extra_classpath extra_classpath
-                    jdbc_properties jdbc_properties
+        @sql_results.each do |row|
+          next if row['name'] == jdbc_properties['user']
 
-                    action :drop
-                  end
-                else
-                  Chef::Log.error "Unmanaged login #{login} found"
-                end
+          login = row['name']
+          role = row['role']
+
+          if !logins_with_roles.include?(login) || !(role_map[login] && role_map[login].include?(role))
+            if delete_unmanaged
+              Chef::Log.info "Removing historic server role #{role} from #{login}"
+              sqlshell_ms_server_role login do
+                jdbc_url jdbc_url
+                jdbc_driver jdbc_driver
+                extra_classpath extra_classpath
+                jdbc_properties jdbc_properties
+                role role
+
+                action :remove
               end
+            else
+              Chef::Log.error "Unmanaged server role #{role} from #{login} found"
+            end
+          end
+        end
+      end
+    end
+
+    sqlshell_exec "Remove historic logins" do
+      jdbc_url jdbc_url
+      jdbc_driver jdbc_driver
+      extra_classpath extra_classpath
+      jdbc_properties jdbc_properties
+      command <<-SQL
+        SELECT
+          SP.name, SP.type_desc
+        FROM
+          sys.syslogins L
+        JOIN sys.server_principals SP ON SP.sid = L.sid
+        WHERE
+          SP.type_desc IN ('SQL_LOGIN', 'WINDOWS_GROUP', 'WINDOWS_LOGIN') AND
+          SP.is_disabled = 0 AND
+          SP.name NOT LIKE 'NT AUTHORITY\\%' AND
+          SP.name NOT LIKE 'NT SERVICE\\%'
+      SQL
+      block do
+        delete_unmanaged = !value['delete_unmanaged_logins'].is_a?(FalseClass)
+
+        @sql_results.each do |row|
+          login = row['name']
+          if value['logins'][login].nil? && login != jdbc_properties['user']
+            if delete_unmanaged
+              Chef::Log.info "Removing historic login #{login}"
+              sqlshell_ms_login login do
+                jdbc_url jdbc_url
+                jdbc_driver jdbc_driver
+                extra_classpath extra_classpath
+                jdbc_properties jdbc_properties
+
+                action :drop
+              end
+            else
+              Chef::Log.error "Unmanaged login #{login} found"
             end
           end
         end
