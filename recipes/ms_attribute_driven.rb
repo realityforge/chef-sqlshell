@@ -120,6 +120,8 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
               end
             end
 
+            delete_unmanaged = !value['delete_unmanaged_server_roles'].is_a?(FalseClass)
+
             @sql_results.each do |row|
               next if row['name'] == jdbc_properties['user']
 
@@ -127,16 +129,19 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
               role = row['role']
 
               if !logins_with_roles.include?(login) || !(role_map[login] && role_map[login].include?(role))
+                if delete_unmanaged
+                  Chef::Log.info "Removing historic server role #{role} from #{login}"
+                  sqlshell_ms_server_role login do
+                    jdbc_url jdbc_url
+                    jdbc_driver jdbc_driver
+                    extra_classpath extra_classpath
+                    jdbc_properties jdbc_properties
+                    role role
 
-                Chef::Log.info "Removing historic server role #{role} from #{login}"
-                sqlshell_ms_server_role login do
-                  jdbc_url jdbc_url
-                  jdbc_driver jdbc_driver
-                  extra_classpath extra_classpath
-                  jdbc_properties jdbc_properties
-                  role role
-
-                  action :remove
+                    action :remove
+                  end
+                else
+                  Chef::Log.error "Unmanaged server role #{role} from #{login} found"
                 end
               end
             end
