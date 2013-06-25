@@ -172,7 +172,7 @@ node['sqlshell']['servers'].each_pair do |key, value|
                   jdbc_properties jdbc_properties
 
                   action :drop
-                end if node.name == 'DEVsql02.fire.dse.vic.gov.au'
+                end
               end
             end
           end
