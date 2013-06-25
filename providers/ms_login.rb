@@ -17,10 +17,12 @@ use_inline_resources
 action :create do
   from = ""
   options = []
+  if new_resource.password
+    options << "PASSWORD=N'#{new_resource.password}'"
+  end
   options << "DEFAULT_DATABASE=[#{new_resource.default_database}]"
   options << "DEFAULT_LANGUAGE=[#{new_resource.default_language}]"
   if new_resource.password
-    options << "PASSWORD='#{new_resource.password}'"
     options << "CHECK_EXPIRATION=OFF"
     options << "CHECK_POLICY=OFF"
     types = ['SQL_LOGIN']
