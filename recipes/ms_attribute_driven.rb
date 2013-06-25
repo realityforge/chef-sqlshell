@@ -92,7 +92,6 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
       end
 
       if value['logins']
-
         sqlshell_exec "Remove historic Server Roles" do
           jdbc_url jdbc_url
           jdbc_driver jdbc_driver
