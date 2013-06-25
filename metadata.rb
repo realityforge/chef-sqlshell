@@ -41,3 +41,8 @@ attribute 'sqlshell/package/url',
   :description => 'The url to the omnibus SqlShell jar file',
   :type => 'string',
   :default => 'https://github.com/realityforge/repository/raw/master/org/realityforge/sqlshell/sqlshell/0.1/sqlshell-0.1-all.jar'
+
+attribute 'sqlshell/sql_server/instances',
+  :display_name => 'Configuration for 0 or more sql server instances',
+  :type => 'hash',
+  :default => {}

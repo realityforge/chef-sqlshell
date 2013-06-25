@@ -16,8 +16,8 @@
 
 include_recipe 'sqlshell::default'
 
-node['sqlshell']['servers'].each_pair do |key, value|
-  server_prefix = "sqlshell.servers.#{key}"
+node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
+  server_prefix = "sqlshell.sql_server.instances.#{key}"
   jdbc_url = Chef::AttributeChecker.ensure_attribute(value, 'jdbc.url', String, server_prefix)
   jdbc_driver = Chef::AttributeChecker.ensure_attribute(value, 'jdbc.driver', String, server_prefix)
   extra_classpath = Chef::AttributeChecker.ensure_attribute(value, 'jdbc.extra_classpath', Array, server_prefix)

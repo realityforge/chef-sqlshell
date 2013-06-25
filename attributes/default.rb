@@ -18,4 +18,4 @@ version = '0.6'
 default['sqlshell']['package']['version'] = version
 default['sqlshell']['package']['url'] = "https://github.com/realityforge/repository/raw/master/org/realityforge/sqlshell/sqlshell/#{version}/sqlshell-#{version}-all.jar"
 
-default['sqlshell']['servers'] = Mash.new
+default['sqlshell']['sql_server']['instances'] = Mash.new
