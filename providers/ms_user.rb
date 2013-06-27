@@ -27,12 +27,13 @@ action :create do
 end
 
 action :drop do
-  sqlshell_exec "DROP USER [#{new_resource.user}]" do
+  drop_user_sql = "DROP USER [#{new_resource.user}]"
+  sqlshell_exec drop_user_sql do
     jdbc_url new_resource.jdbc_url
     jdbc_driver new_resource.jdbc_driver
     extra_classpath new_resource.extra_classpath
     jdbc_properties new_resource.jdbc_properties
-    command "DROP USER [#{new_resource.user}]"
+    command "USE [#{new_resource.database}]; #{drop_user_sql}"
     only_if_sql "SELECT * FROM [#{new_resource.database}].sys.sysusers WHERE name = '#{new_resource.user}'"
   end
 end
