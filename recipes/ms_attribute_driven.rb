@@ -90,6 +90,47 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
           end
         end
       end
+      sqlshell_exec "Remove historic users in #{database_name}" do
+        jdbc_url jdbc_url
+        jdbc_driver jdbc_driver
+        extra_classpath extra_classpath
+        jdbc_properties jdbc_properties
+        command <<-SQL
+          USE [#{database_name}];
+          SELECT
+            U.name AS [user]
+          FROM
+            sys.database_principals U
+          JOIN sys.server_principals SP ON SP.sid = U.sid AND SP.is_disabled = 0 AND SP.name NOT LIKE 'NT AUTHORITY\\%' AND SP.name NOT LIKE 'NT SERVICE\\%'
+          WHERE
+            U.name != 'dbo' AND
+            U.type_desc IN ('SQL_USER','WINDOWS_USER','WINDOWS_GROUP')
+        SQL
+        block do
+          delete_unmanaged = !value['delete_unmanaged_users'].is_a?(FalseClass)
+
+          @sql_results.each do |row|
+            user = row['user']
+
+            if database_config['users'][user]
+              if delete_unmanaged
+                Chef::Log.info "Removing historic user #{user} in #{database_name}"
+
+                sqlshell_ms_user user do
+                  jdbc_url jdbc_url
+                  jdbc_driver jdbc_driver
+                  extra_classpath extra_classpath
+                  jdbc_properties jdbc_properties
+                  database database_name
+                  action :drop
+                end
+              else
+                Chef::Log.error "Unmanaged user '#{user}' in '#{database_name}' found"
+              end
+            end
+          end
+        end
+      end
     end
   end
 
