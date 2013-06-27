@@ -115,7 +115,7 @@ def resolved_securable
 end
 
 def quoted_securable
-  resolved_securable.collect{|e| "[#{e}]"}.join('.')
+  securable_type == 'DATABASE' ? "[#{securable_name}]" : "[#{securable_schema}].[#{securable_name}]"
 end
 
 def securable_name
