@@ -36,8 +36,8 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
         password login_config['password'] if login_config['password']
       end
 
-      if value['server_roles']
-        value['server_roles'].each_pair do |role, config|
+      if login_config['server_roles']
+        login_config['server_roles'].each_pair do |role, config|
           sqlshell_ms_server_role login do
             jdbc_url jdbc_url
             jdbc_driver jdbc_driver
