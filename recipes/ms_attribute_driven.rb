@@ -90,6 +90,81 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
           end
         end
       end
+
+      sqlshell_exec "Remove historic permissions in #{database_name}" do
+        jdbc_url jdbc_url
+        jdbc_driver jdbc_driver
+        extra_classpath extra_classpath
+        jdbc_properties jdbc_properties
+        command <<-SQL
+          USE [#{database_name}];
+          SELECT
+            U.name AS [user],
+            P.class_desc AS securable_type,
+            P.permission_name AS permission,
+            P.state_desc as permission_action,
+            COALESCE(O.name,T.name) AS securable_name,
+            S.name AS securable_schema
+          FROM
+            sys.database_permissions P
+          JOIN sys.database_principals U ON P.grantee_principal_id = U.principal_id AND U.type_desc IN ('SQL_USER','WINDOWS_USER','WINDOWS_GROUP')
+          JOIN sys.server_principals SP ON SP.sid = U.sid AND SP.is_disabled = 0 AND SP.name NOT LIKE 'NT AUTHORITY\\%' AND SP.name NOT LIKE 'NT SERVICE\\%'
+          LEFT JOIN sys.all_objects O ON O.object_id = P.major_id
+          LEFT JOIN sys.types T ON T.user_type_id = P.major_id
+          LEFT JOIN sys.schemas S ON S.schema_id = COALESCE(O.schema_id,T.schema_id)
+          WHERE
+            P.class_desc IN ('DATABASE','TYPE','OBJECT_OR_COLUMN') AND
+            U.name != 'dbo'
+        SQL
+        block do
+          permissions = []
+          database_config['users'].each_pair do |user, user_config|
+            if user_config['permissions']
+              user_config['permissions'].values.each do |permission_config|
+                permission_action = (permission_config['permission_action'] || 'grant').upcase
+                securable_type = permission_config['securable_type'] == 'OBJECT' ? 'OBJECT_OR_COLUMN' : permission_config['securable_type']
+                permission = permission_config['permission']
+                securable = permission_config['securable'] ? permission_config['securable'].gsub('[','').gsub(']','') : database_name
+                permissions << "#{user}-#{permission}-#{securable_type}-#{securable}-#{permission_action}".downcase
+              end
+            end
+          end
+
+          delete_unmanaged = !value['delete_unmanaged_permissions'].is_a?(FalseClass)
+
+          @sql_results.each do |row|
+            user = row['user']
+            permission = row['permission']
+            securable_type = row['securable_type']
+            securable = row['securable_schema'] ? "#{row['securable_schema']}.#{row['securable_name']}" : row['securable_name']
+            permission_action = row['permission_action']
+
+            permission_description = "#{user}-#{permission}-#{securable_type}-#{securable || database_name}-#{permission_action}".downcase
+
+            if !permissions.include?(permission_description)
+              if delete_unmanaged
+                Chef::Log.info "Removing historic permission #{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}"
+
+                sqlshell_ms_permission "Revoking ... #{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}" do
+                  jdbc_url jdbc_url
+                  jdbc_driver jdbc_driver
+                  extra_classpath extra_classpath
+                  jdbc_properties jdbc_properties
+                  user user
+                  database database_name
+                  securable_type(securable_type == 'OBJECT_OR_COLUMN' ? 'OBJECT' : securable_type)
+                  securable securable
+                  permission permission
+                  action :revoke
+                end
+              else
+                Chef::Log.error "Unmanaged permission '#{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}' found"
+              end
+            end
+          end
+        end
+      end
+
       sqlshell_exec "Remove historic users in #{database_name}" do
         jdbc_url jdbc_url
         jdbc_driver jdbc_driver
