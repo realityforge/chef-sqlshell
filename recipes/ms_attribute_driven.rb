@@ -150,7 +150,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
       end
     end
 
-    sqlshell_exec "Remove historic logins" do
+    sqlshell_exec "Remove historic logins on instance #{key}" do
       jdbc_url jdbc_url
       jdbc_driver jdbc_driver
       extra_classpath extra_classpath
