@@ -26,7 +26,7 @@ JOIN [#{new_resource.database}].sys.database_principals U ON RM.member_principal
 WHERE
   R.is_fixed_role = 1 AND
   U.name = '#{new_resource.user}' AND
-  R.name = '#{new_resource.user}'
+  R.name = '#{new_resource.role}'
 SQL
 end
 
