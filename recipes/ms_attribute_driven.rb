@@ -23,6 +23,13 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
   extra_classpath = Chef::AttributeChecker.ensure_attribute(value, 'jdbc.extra_classpath', Array, server_prefix)
   jdbc_properties = Chef::AttributeChecker.ensure_attribute(value, 'jdbc.properties', Hash, server_prefix)
 
+  delete_unmanaged_permissions = !value['delete_unmanaged_permissions'].is_a?(FalseClass)
+  delete_unmanaged_database_roles = !value['delete_unmanaged_database_roles'].is_a?(FalseClass)
+  delete_unmanaged_users = !value['delete_unmanaged_users'].is_a?(FalseClass)
+  delete_unmanaged_server_roles = !value['delete_unmanaged_server_roles'].is_a?(FalseClass)
+  delete_unmanaged_logins = !value['delete_unmanaged_logins'].is_a?(FalseClass)
+  delete_unmanaged_databases = value['delete_unmanaged_databases'].is_a?(TrueClass)
+
   if value['logins']
     value['logins'].each_pair do |login, login_config|
       sqlshell_ms_login login do
@@ -53,6 +60,8 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
   if value['databases']
     value['databases'].each_pair do |database_name, database_config|
       database_prefix = "#{server_prefix}.databases.#{database_name}"
+
+      is_database_managed = database_config['managed'].nil? ? true : database_config['managed']
 
       sqlshell_ms_database database_name do
         jdbc_url jdbc_url
@@ -155,8 +164,6 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
             end
           end
 
-          delete_unmanaged = !value['delete_unmanaged_permissions'].is_a?(FalseClass)
-
           @sql_results.each do |row|
             user = row['user']
             permission = row['permission']
@@ -167,7 +174,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
             permission_description = "#{user}-#{permission}-#{securable_type}-#{securable || database_name}-#{permission_action}".downcase
 
             if !permissions.include?(permission_description)
-              if delete_unmanaged
+              if is_database_managed && delete_unmanaged_permissions
                 Chef::Log.info "Removing historic permission #{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}"
 
                 sqlshell_ms_permission "Revoking ... #{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}" do
@@ -214,14 +221,12 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
             role_map[user] = user_config['database_roles'] ? user_config['database_roles'].keys : []
           end
 
-          delete_unmanaged = !value['delete_unmanaged_database_roles'].is_a?(FalseClass)
-
           @sql_results.each do |row|
             user = row['user']
             database_role = row['role']
 
             if !role_map[user] || !role_map[user].include?(database_role)
-              if delete_unmanaged
+              if is_database_managed && delete_unmanaged_database_roles
                 Chef::Log.info "Removing historic database role '#{database_role}' from user '#{user}' in database ''#{database_name}''"
 
                 sqlshell_ms_database_role "Remove '#{user}' from role '#{database_role}' in '#{database_name}'" do
@@ -259,13 +264,11 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
             U.type_desc IN ('SQL_USER','WINDOWS_USER','WINDOWS_GROUP')
         SQL
         block do
-          delete_unmanaged = !value['delete_unmanaged_users'].is_a?(FalseClass)
-
           @sql_results.each do |row|
             user = row['user']
 
             if database_config['users'][user]
-              if delete_unmanaged
+              if is_database_managed && delete_unmanaged_users
                 Chef::Log.info "Removing historic user #{user} in #{database_name}"
 
                 sqlshell_ms_user user do
@@ -315,8 +318,6 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
           end
         end
 
-        delete_unmanaged = !value['delete_unmanaged_server_roles'].is_a?(FalseClass)
-
         @sql_results.each do |row|
           next if row['name'] == jdbc_properties['user']
 
@@ -324,7 +325,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
           role = row['role']
 
           if !logins_with_roles.include?(login) || !(role_map[login] && role_map[login].include?(role))
-            if delete_unmanaged
+            if delete_unmanaged_server_roles
               Chef::Log.info "Removing historic server role #{role} from #{login}"
               sqlshell_ms_server_role login do
                 jdbc_url jdbc_url
@@ -361,12 +362,10 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
           SP.name NOT LIKE 'NT SERVICE\\%'
       SQL
       block do
-        delete_unmanaged = !value['delete_unmanaged_logins'].is_a?(FalseClass)
-
         @sql_results.each do |row|
           login = row['name']
           if value['logins'][login].nil? && login != jdbc_properties['user']
-            if delete_unmanaged
+            if delete_unmanaged_logins
               Chef::Log.info "Removing historic login #{login}"
               sqlshell_ms_login login do
                 jdbc_url jdbc_url
@@ -395,12 +394,10 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
         WHERE name NOT IN ('master','model','msdb','tempdb')
       SQL
       block do
-        delete_unmanaged = value['delete_unmanaged_databases'].is_a?(TrueClass)
-
         @sql_results.each do |row|
           database_name = row['name']
           if value['databases'][database_name].nil?
-            if delete_unmanaged
+            if delete_unmanaged_databases
               Chef::Log.info "Removing historic database #{database_name}"
               sqlshell_ms_database database_name do
                 jdbc_url jdbc_url
