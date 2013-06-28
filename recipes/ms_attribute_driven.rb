@@ -53,6 +53,17 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
   if value['databases']
     value['databases'].each_pair do |database_name, database_config|
       database_prefix = "#{server_prefix}.databases.#{database_name}"
+
+      sqlshell_ms_database database_name do
+        jdbc_url jdbc_url
+        jdbc_driver jdbc_driver
+        extra_classpath extra_classpath
+        jdbc_properties jdbc_properties
+
+        recovery_model database_config['recovery_model'] if database_config['recovery_model']
+        collation database_config['collation'] if database_config['collation']
+      end
+
       if database_config['users']
         database_config['users'].each_pair do |user, user_config|
           user_prefix = "#{database_prefix}.users.#{user}"
@@ -367,6 +378,40 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
               end
             else
               Chef::Log.error "Unmanaged login #{login} found"
+            end
+          end
+        end
+      end
+    end
+
+    sqlshell_exec "Remove historic databases on instance #{key}" do
+      jdbc_url jdbc_url
+      jdbc_driver jdbc_driver
+      extra_classpath extra_classpath
+      jdbc_properties jdbc_properties
+      command <<-SQL
+        SELECT name
+        FROM sys.databases
+        WHERE name NOT IN ('master','model','msdb','tempdb')
+      SQL
+      block do
+        delete_unmanaged = value['delete_unmanaged_databases'].is_a?(TrueClass)
+
+        @sql_results.each do |row|
+          database_name = row['name']
+          if value['databases'][database_name].nil?
+            if delete_unmanaged
+              Chef::Log.info "Removing historic database #{database_name}"
+              sqlshell_ms_database database_name do
+                jdbc_url jdbc_url
+                jdbc_driver jdbc_driver
+                extra_classpath extra_classpath
+                jdbc_properties jdbc_properties
+
+                action :drop
+              end
+            else
+              Chef::Log.error "Unmanaged database named '#{database_name}' found"
             end
           end
         end
