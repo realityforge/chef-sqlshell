@@ -179,6 +179,58 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
         end
       end
 
+      sqlshell_exec "Remove historic database roles in #{database_name}" do
+        jdbc_url jdbc_url
+        jdbc_driver jdbc_driver
+        extra_classpath extra_classpath
+        jdbc_properties jdbc_properties
+        command <<-SQL
+          USE [#{database_name}];
+          SELECT
+            U.name AS [user],
+            R.name AS [role]
+           FROM
+            sys.database_principals R
+          JOIN sys.database_role_members RM ON RM.role_principal_id = R.principal_id
+          JOIN sys.database_principals U ON RM.member_principal_id = U.principal_id
+          WHERE
+            R.is_fixed_role = 1 AND
+            U.name != 'dbo'
+        SQL
+        block do
+          role_map = {}
+          database_config['users'].each_pair do |user, user_config|
+            role_map[user] = user_config['database_roles'] ? user_config['database_roles'].keys : []
+          end
+
+          delete_unmanaged = !value['delete_unmanaged_database_roles'].is_a?(FalseClass)
+
+          @sql_results.each do |row|
+            user = row['user']
+            database_role = row['role']
+
+            if !role_map[user] || !role_map[user].include?(database_role)
+              if delete_unmanaged
+                Chef::Log.info "Removing historic database role '#{database_role}' from user '#{user}' in database ''#{database_name}''"
+
+                sqlshell_ms_database_role "Remove '#{user}' from role '#{database_role}' in '#{database_name}'" do
+                  jdbc_url jdbc_url
+                  jdbc_driver jdbc_driver
+                  extra_classpath extra_classpath
+                  jdbc_properties jdbc_properties
+                  user user
+                  database database_name
+                  role database_role
+                  action :remove
+                end
+              else
+                Chef::Log.error "Unmanaged database role '#{database_role} for #{user} in #{database_name}' found"
+              end
+            end
+          end
+        end
+      end
+
       sqlshell_exec "Remove historic users in #{database_name}" do
         jdbc_url jdbc_url
         jdbc_driver jdbc_driver
