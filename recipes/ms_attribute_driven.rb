@@ -66,6 +66,20 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
             database database_name
           end
 
+          if user_config['database_roles']
+            user_config['database_roles'].each_pair do |database_role, role_config|
+              sqlshell_ms_database_role "ADD '#{user}' to role '#{database_role}' in '#{database_name}'" do
+                jdbc_url jdbc_url
+                jdbc_driver jdbc_driver
+                extra_classpath extra_classpath
+                jdbc_properties jdbc_properties
+                user user
+                database database_name
+                role database_role
+              end
+            end
+          end
+
           if user_config['permissions']
             user_config['permissions'].each_pair do |permission_key, permission_config|
               permission_prefix = "#{user_prefix}.permissions.#{permission_key}"
