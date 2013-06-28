@@ -62,7 +62,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
 
         recovery_model database_config['recovery_model'] if database_config['recovery_model']
         collation database_config['collation'] if database_config['collation']
-      end
+      end unless ['master','msdb','model','tempdb'].include?(database_name)
 
       if database_config['users']
         database_config['users'].each_pair do |user, user_config|
