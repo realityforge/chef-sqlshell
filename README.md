@@ -22,15 +22,20 @@ The sqlshell cookbook installs the SqlShell binary and provides LWRPs to execute
 
 * `node['sqlshell']['package']['version']` - The version of SqlShell to install. Defaults to `0.1`.
 * `node['sqlshell']['package']['url']` - The url to the omnibus SqlShell jar file. Defaults to `https://github.com/realityforge/repository/raw/master/org/realityforge/sqlshell/sqlshell/0.1/sqlshell-0.1-all.jar`.
+* `node['sqlshell']['sql_server']['instances']` - . Defaults to `{}`.
 
 # Recipes
 
 * sqlshell::default - Installs the SqlShell binaries
+* sqlshell::ms_attribute_driven - Configures 0 or more SQL Server instances
 
 # Resources
 
 * [sqlshell_exec](#sqlshell_exec) - Execute a sql command on the specified database.
+* [sqlshell_ms_database](#sqlshell_ms_database) - Manage databases in in SQL Server.
+* [sqlshell_ms_database_role](#sqlshell_ms_database_role) - Manage the membership of a database user in a role for a particular database.
 * [sqlshell_ms_login](#sqlshell_ms_login) - Manage a login resource in SQL Server.
+* [sqlshell_ms_permission](#sqlshell_ms_permission) - Manage permissions in in SQL Server.
 * [sqlshell_ms_server_role](#sqlshell_ms_server_role) - Manage a server role for a login resource in SQL Server.
 * [sqlshell_ms_user](#sqlshell_ms_user) - Manage a user resource in a database in SQL Server.
 * [sqlshell_pg_user](#sqlshell_pg_user) - Manage a user resource in postgres database.
@@ -64,6 +69,71 @@ from which the other database automation elements are driven.
       jdbc_properties 'user' => 'sa', 'password' => 'secret'
       command "CREATE SCHEMA c"
       not_if_sql "SELECT * FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = 'c'"
+    end
+
+## sqlshell_ms_database
+
+Manage databases in in SQL Server.
+
+### Actions
+
+- create: Create the database. Default action.
+- drop: Drop the database.
+
+### Attribute Parameters
+
+- database: The database to create/drop.
+- recovery_model: The recovery model of the database. Defaults to <code>"SIMPLE"</code>.
+- collation: The collation of the database. Defaults to <code>"SQL_Latin1_General_CP1_CS_AS"</code>.
+- jdbc_url: The jdbc connection url.
+- jdbc_driver: The class name of the jdbc driver.
+- extra_classpath: An array of urls to jars to add to the classpath.
+- jdbc_properties: A collection of jdbc connection properties. Defaults to <code>{}</code>.
+
+### Examples
+
+    # Create a database
+    sqlshell_ms_database "ResourceDB" do
+      jdbc_url "jdbc:jtds:sqlserver://127.0.0.1:5432/mydb"
+      jdbc_driver 'net.sourceforge.jtds.jdbc.Driver'
+      extra_classpath ['http://repo1.maven.org/maven2/net/sourceforge/jtds/jtds/1.2.7/jtds-1.2.7.jar']
+      jdbc_properties 'user' => 'sa', 'password' => 'secret'
+
+      recovery_model "SIMPLE"
+      collation 'SQL_Latin1_General_CP1_CS_AS'
+    end
+
+## sqlshell_ms_database_role
+
+Manage the membership of a database user in a role for a particular database.
+
+### Actions
+
+- add: Create the database role membership. Default action.
+- remove: Remove the database role membership.
+
+### Attribute Parameters
+
+- user: The name of the user.
+- role: The associated role.
+- database: The associated database.
+- jdbc_url: The jdbc connection url.
+- jdbc_driver: The class name of the jdbc driver.
+- extra_classpath: An array of urls to jars to add to the classpath.
+- jdbc_properties: A collection of jdbc connection properties. Defaults to <code>{}</code>.
+
+### Examples
+
+    # Put fred in db_datareader role
+    sqlshell_ms_database_role "fred in role db_datareader" do
+      jdbc_url "jdbc:jtds:sqlserver://127.0.0.1:5432/mydb"
+      jdbc_driver 'net.sourceforge.jtds.jdbc.Driver'
+      extra_classpath ['http://repo1.maven.org/maven2/net/sourceforge/jtds/jtds/1.2.7/jtds-1.2.7.jar']
+      jdbc_properties 'user' => 'sa', 'password' => 'secret'
+
+      user "fred"
+      role "db_datareader"
+      database "bigdb"
     end
 
 ## sqlshell_ms_login
@@ -111,6 +181,72 @@ Manage a login resource in SQL Server.
       jdbc_driver 'net.sourceforge.jtds.jdbc.Driver'
       extra_classpath ['http://repo1.maven.org/maven2/net/sourceforge/jtds/jtds/1.2.7/jtds-1.2.7.jar']
       jdbc_properties 'user' => 'sa', 'password' => 'secret'
+    end
+
+## sqlshell_ms_permission
+
+Manage permissions in in SQL Server. Grant, deny and revoke permissions.
+
+### Actions
+
+- grant: Grant a permission. Default action.
+- deny: Deny a permission.
+- revoke: Revoke a previous grant or deny permission.
+
+### Attribute Parameters
+
+- user: The name of the user.
+- database: The database in which to create the user.
+- securable_type: The type of the securable.
+- securable: The name of the securable element. Defaults to <code>nil</code>.
+- permission: The type of the permission.
+- jdbc_url: The jdbc connection url.
+- jdbc_driver: The class name of the jdbc driver.
+- extra_classpath: An array of urls to jars to add to the classpath.
+- jdbc_properties: A collection of jdbc connection properties. Defaults to <code>{}</code>.
+
+### Examples
+
+    # Grant fred the ability to select in a database
+    sqlshell_ms_permission "Allow fred to perform SELECTs in database" do
+      jdbc_url "jdbc:jtds:sqlserver://127.0.0.1:5432/mydb"
+      jdbc_driver 'net.sourceforge.jtds.jdbc.Driver'
+      extra_classpath ['http://repo1.maven.org/maven2/net/sourceforge/jtds/jtds/1.2.7/jtds-1.2.7.jar']
+      jdbc_properties 'user' => 'sa', 'password' => 'secret'
+
+      user "fred"
+      database "bigdb"
+      securable_type 'DATABASE'
+      permission 'SELECT'
+      action :grant
+    end
+
+    # Deny fred the ability to select from a table
+    sqlshell_ms_permission "Deny fred the ability to perform SELECTs on table" do
+      jdbc_url "jdbc:jtds:sqlserver://127.0.0.1:5432/mydb"
+      jdbc_driver 'net.sourceforge.jtds.jdbc.Driver'
+      extra_classpath ['http://repo1.maven.org/maven2/net/sourceforge/jtds/jtds/1.2.7/jtds-1.2.7.jar']
+      jdbc_properties 'user' => 'sa', 'password' => 'secret'
+
+      user "fred"
+      database "bigdb"
+      securable_type 'OBJECT_OR_COLUMN'
+      permission 'SELECT'
+      action :deny
+    end
+
+    # Revoke the deny
+    sqlshell_ms_permission "Revoke the deny" do
+      jdbc_url "jdbc:jtds:sqlserver://127.0.0.1:5432/mydb"
+      jdbc_driver 'net.sourceforge.jtds.jdbc.Driver'
+      extra_classpath ['http://repo1.maven.org/maven2/net/sourceforge/jtds/jtds/1.2.7/jtds-1.2.7.jar']
+      jdbc_properties 'user' => 'sa', 'password' => 'secret'
+
+      user "fred"
+      database "bigdb"
+      securable_type 'OBJECT_OR_COLUMN'
+      permission 'SELECT'
+      action :revoke
     end
 
 ## sqlshell_ms_server_role
