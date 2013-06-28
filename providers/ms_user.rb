@@ -25,7 +25,7 @@ action :create do
     not_if_sql "SELECT * FROM [#{new_resource.database}].sys.sysusers WHERE name = '#{new_resource.user}'"
   end
 
-  update_user_sql = "ALTER USER [#{new_resource.user}] WITH LOGIN [#{new_resource.login}]"
+  update_user_sql = "ALTER USER [#{new_resource.user}] WITH LOGIN = [#{new_resource.login}]"
   sqlshell_exec update_user_sql do
     jdbc_url new_resource.jdbc_url
     jdbc_driver new_resource.jdbc_driver
