@@ -16,12 +16,12 @@
 
 include_recipe 'sqlshell::default'
 
-node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
-  server_prefix = "sqlshell.sql_server.instances.#{key}"
-  jdbc_url = Chef::AttributeChecker.ensure_attribute(value, 'jdbc.url', String, server_prefix)
-  jdbc_driver = Chef::AttributeChecker.ensure_attribute(value, 'jdbc.driver', String, server_prefix)
-  extra_classpath = Chef::AttributeChecker.ensure_attribute(value, 'jdbc.extra_classpath', Array, server_prefix)
-  jdbc_properties = Chef::AttributeChecker.ensure_attribute(value, 'jdbc.properties', Hash, server_prefix)
+node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
+  server_prefix = "sqlshell.sql_server.instances.#{instance_key}"
+  jdbc_url = RealityForge::AttributeTools.ensure_attribute(value, 'jdbc.url', String, server_prefix)
+  jdbc_driver = RealityForge::AttributeTools.ensure_attribute(value, 'jdbc.driver', String, server_prefix)
+  extra_classpath = RealityForge::AttributeTools.ensure_attribute(value, 'jdbc.extra_classpath', Array, server_prefix)
+  jdbc_properties = RealityForge::AttributeTools.ensure_attribute(value, 'jdbc.properties', Hash, server_prefix)
 
   delete_unmanaged_permissions = !value['delete_unmanaged_permissions'].is_a?(FalseClass)
   delete_unmanaged_database_roles = !value['delete_unmanaged_database_roles'].is_a?(FalseClass)
@@ -32,12 +32,13 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
 
   if value['logins']
     value['logins'].each_pair do |login, login_config|
-      sqlshell_ms_login login do
+      sqlshell_ms_login "#{instance_key}-#{login}" do
         jdbc_url jdbc_url
         jdbc_driver jdbc_driver
         extra_classpath extra_classpath
         jdbc_properties jdbc_properties
 
+        login login
         default_database login_config['default_database'] if login_config['default_database']
         default_language login_config['default_language'] if login_config['default_language']
         password login_config['password'] if login_config['password']
@@ -45,11 +46,12 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
 
       if login_config['server_roles']
         login_config['server_roles'].each_pair do |role, config|
-          sqlshell_ms_server_role login do
+          sqlshell_ms_server_role "#{instance_key}-#{login}-#{role}" do
             jdbc_url jdbc_url
             jdbc_driver jdbc_driver
             extra_classpath extra_classpath
             jdbc_properties jdbc_properties
+            login login
             role role
           end
         end
@@ -63,11 +65,13 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
 
       is_database_managed = database_config['managed'].nil? ? true : database_config['managed']
 
-      sqlshell_ms_database database_name do
+      sqlshell_ms_database "#{instance_key}-#{database_name}" do
         jdbc_url jdbc_url
         jdbc_driver jdbc_driver
         extra_classpath extra_classpath
         jdbc_properties jdbc_properties
+
+        database database_name
 
         recovery_model database_config['recovery_model'] if database_config['recovery_model']
         collation database_config['collation'] if database_config['collation']
@@ -77,18 +81,19 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
         database_config['users'].each_pair do |user, user_config|
           user_prefix = "#{database_prefix}.users.#{user}"
 
-          sqlshell_ms_user user do
+          sqlshell_ms_user "#{instance_key}-#{database_name}-#{user}" do
             jdbc_url jdbc_url
             jdbc_driver jdbc_driver
             extra_classpath extra_classpath
             jdbc_properties jdbc_properties
-            login Chef::AttributeChecker.ensure_attribute(user_config, 'login', String, user_prefix)
+            login RealityForge::AttributeTools.ensure_attribute(user_config, 'login', String, user_prefix)
             database database_name
+            user user
           end
 
           if user_config['database_roles']
             user_config['database_roles'].each_pair do |database_role, role_config|
-              sqlshell_ms_database_role "ADD '#{user}' to role '#{database_role}' in '#{database_name}'" do
+              sqlshell_ms_database_role "#{instance_key}-ADD '#{user}' to role '#{database_role}' in '#{database_name}'" do
                 jdbc_url jdbc_url
                 jdbc_driver jdbc_driver
                 extra_classpath extra_classpath
@@ -103,12 +108,12 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
           if user_config['permissions']
             user_config['permissions'].each_pair do |permission_key, permission_config|
               permission_prefix = "#{user_prefix}.permissions.#{permission_key}"
-              permission = Chef::AttributeChecker.ensure_attribute(permission_config, 'permission', String, permission_prefix)
-              securable_type = Chef::AttributeChecker.ensure_attribute(permission_config, 'securable_type', String, permission_prefix)
-              securable = permission_config['securable'] ? Chef::AttributeChecker.ensure_attribute(permission_config, 'securable', String, permission_prefix) : nil
-              permission_action = permission_config['permission_action'] ? Chef::AttributeChecker.ensure_attribute(permission_config, 'permission_action', String, permission_prefix) : nil
+              permission = RealityForge::AttributeTools.ensure_attribute(permission_config, 'permission', String, permission_prefix)
+              securable_type = RealityForge::AttributeTools.ensure_attribute(permission_config, 'securable_type', String, permission_prefix)
+              securable = permission_config['securable'] ? RealityForge::AttributeTools.ensure_attribute(permission_config, 'securable', String, permission_prefix) : nil
+              permission_action = permission_config['permission_action'] ? RealityForge::AttributeTools.ensure_attribute(permission_config, 'permission_action', String, permission_prefix) : nil
 
-              sqlshell_ms_permission "#{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}" do
+              sqlshell_ms_permission "#{instance_key}-#{database_name}-#{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}" do
                 jdbc_url jdbc_url
                 jdbc_driver jdbc_driver
                 extra_classpath extra_classpath
@@ -125,7 +130,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
         end
       end
 
-      sqlshell_exec "Remove historic permissions in #{database_name}" do
+      sqlshell_exec "#{instance_key}-Remove historic permissions in #{database_name}" do
         jdbc_url jdbc_url
         jdbc_driver jdbc_driver
         extra_classpath extra_classpath
@@ -177,7 +182,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
               if is_database_managed && delete_unmanaged_permissions
                 Chef::Log.info "Removing historic permission #{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}"
 
-                sqlshell_ms_permission "Revoking ... #{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}" do
+                sqlshell_ms_permission "#{instance_key}-Revoking ... #{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}" do
                   jdbc_url jdbc_url
                   jdbc_driver jdbc_driver
                   extra_classpath extra_classpath
@@ -197,7 +202,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
         end
       end
 
-      sqlshell_exec "Remove historic database roles in #{database_name}" do
+      sqlshell_exec "#{instance_key}-Remove historic database roles in #{database_name}" do
         jdbc_url jdbc_url
         jdbc_driver jdbc_driver
         extra_classpath extra_classpath
@@ -229,7 +234,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
               if is_database_managed && delete_unmanaged_database_roles
                 Chef::Log.info "Removing historic database role '#{database_role}' from user '#{user}' in database ''#{database_name}''"
 
-                sqlshell_ms_database_role "Remove '#{user}' from role '#{database_role}' in '#{database_name}'" do
+                sqlshell_ms_database_role "#{instance_key}-Remove '#{user}' from role '#{database_role}' in '#{database_name}'" do
                   jdbc_url jdbc_url
                   jdbc_driver jdbc_driver
                   extra_classpath extra_classpath
@@ -247,7 +252,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
         end
       end
 
-      sqlshell_exec "Remove historic users in #{database_name}" do
+      sqlshell_exec "#{instance_key}-Remove historic users in #{database_name}" do
         jdbc_url jdbc_url
         jdbc_driver jdbc_driver
         extra_classpath extra_classpath
@@ -271,12 +276,14 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
               if is_database_managed && delete_unmanaged_users
                 Chef::Log.info "Removing historic user #{user} in #{database_name}"
 
-                sqlshell_ms_user user do
+                sqlshell_ms_user "#{instance_key}-#{database_name}-#{user}" do
                   jdbc_url jdbc_url
                   jdbc_driver jdbc_driver
                   extra_classpath extra_classpath
                   jdbc_properties jdbc_properties
                   database database_name
+                  user user
+
                   action :drop
                 end
               else
@@ -290,7 +297,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
   end
 
   if value['logins']
-    sqlshell_exec "Remove historic Server Roles on instance #{key}" do
+    sqlshell_exec "Remove historic Server Roles on instance #{instance_key}" do
       jdbc_url jdbc_url
       jdbc_driver jdbc_driver
       extra_classpath extra_classpath
@@ -326,7 +333,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
 
           if !logins_with_roles.include?(login) || !(role_map[login] && role_map[login].include?(role))
             if delete_unmanaged_server_roles
-              Chef::Log.info "Removing historic server role #{role} from #{login}"
+              Chef::Log.info "#{instance_key}-Removing historic server role #{role} from #{login}"
               sqlshell_ms_server_role login do
                 jdbc_url jdbc_url
                 jdbc_driver jdbc_driver
@@ -344,7 +351,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
       end
     end
 
-    sqlshell_exec "Remove historic logins on instance #{key}" do
+    sqlshell_exec "Remove historic logins on instance #{instance_key}" do
       jdbc_url jdbc_url
       jdbc_driver jdbc_driver
       extra_classpath extra_classpath
@@ -366,12 +373,14 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
           login = row['name']
           if value['logins'][login].nil? && login != jdbc_properties['user']
             if delete_unmanaged_logins
-              Chef::Log.info "Removing historic login #{login}"
-              sqlshell_ms_login login do
+              Chef::Log.info "#{instance_key}-Removing historic login #{login}"
+              sqlshell_ms_login "##{instance_key}-#{login}" do
                 jdbc_url jdbc_url
                 jdbc_driver jdbc_driver
                 extra_classpath extra_classpath
                 jdbc_properties jdbc_properties
+
+                login login
 
                 action :drop
               end
@@ -383,7 +392,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
       end
     end
 
-    sqlshell_exec "Remove historic databases on instance #{key}" do
+    sqlshell_exec "Remove historic databases on instance #{instance_key}" do
       jdbc_url jdbc_url
       jdbc_driver jdbc_driver
       extra_classpath extra_classpath
@@ -399,11 +408,13 @@ node['sqlshell']['sql_server']['instances'].each_pair do |key, value|
           if value['databases'][database_name].nil?
             if delete_unmanaged_databases
               Chef::Log.info "Removing historic database #{database_name}"
-              sqlshell_ms_database database_name do
+              sqlshell_ms_database "#{instance_key}-#{database_name}" do
                 jdbc_url jdbc_url
                 jdbc_driver jdbc_driver
                 extra_classpath extra_classpath
                 jdbc_properties jdbc_properties
+
+                database database_name
 
                 action :drop
               end
