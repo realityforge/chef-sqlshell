@@ -30,6 +30,22 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
   delete_unmanaged_logins = !value['delete_unmanaged_logins'].is_a?(FalseClass)
   delete_unmanaged_databases = value['delete_unmanaged_databases'].is_a?(TrueClass)
 
+  if value['databases']
+    value['databases'].each_pair do |database_name, database_config|
+      sqlshell_ms_database "#{instance_key}-#{database_name}" do
+        jdbc_url jdbc_url
+        jdbc_driver jdbc_driver
+        extra_classpath extra_classpath
+        jdbc_properties jdbc_properties
+
+        database database_name
+
+        recovery_model database_config['recovery_model'] if database_config['recovery_model']
+        collation database_config['collation'] if database_config['collation']
+      end unless ['master', 'msdb', 'model', 'tempdb'].include?(database_name)
+    end
+  end
+
   if value['logins']
     value['logins'].each_pair do |login, login_config|
       sqlshell_ms_login "#{instance_key}-#{login}" do
@@ -64,18 +80,6 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
       database_prefix = "#{server_prefix}.databases.#{database_name}"
 
       is_database_managed = database_config['managed'].nil? ? true : database_config['managed']
-
-      sqlshell_ms_database "#{instance_key}-#{database_name}" do
-        jdbc_url jdbc_url
-        jdbc_driver jdbc_driver
-        extra_classpath extra_classpath
-        jdbc_properties jdbc_properties
-
-        database database_name
-
-        recovery_model database_config['recovery_model'] if database_config['recovery_model']
-        collation database_config['collation'] if database_config['collation']
-      end unless ['master','msdb','model','tempdb'].include?(database_name)
 
       if database_config['users']
         database_config['users'].each_pair do |user, user_config|
