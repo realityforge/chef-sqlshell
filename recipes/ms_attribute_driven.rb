@@ -79,7 +79,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
     value['databases'].each_pair do |database_name, database_config|
       database_prefix = "#{server_prefix}.databases.#{database_name}"
 
-      is_database_managed = database_config['managed'].nil? ? true : database_config['managed']
+      is_database_managed = database_config['managed'].nil? ? false : database_config['managed']
 
       if database_config['users']
         database_config['users'].each_pair do |user, user_config|
@@ -183,7 +183,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
             permission_description = "#{user}-#{permission}-#{securable_type}-#{securable || database_name}-#{permission_action}".downcase
 
             if !permissions.include?(permission_description)
-              if is_database_managed && delete_unmanaged_permissions
+              if is_database_managed || delete_unmanaged_permissions
                 Chef::Log.info "Removing historic permission #{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}"
 
                 sqlshell_ms_permission "#{instance_key}-Revoking ... #{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}" do
@@ -235,7 +235,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
             database_role = row['role']
 
             if !role_map[user] || !role_map[user].include?(database_role)
-              if is_database_managed && delete_unmanaged_database_roles
+              if is_database_managed || delete_unmanaged_database_roles
                 Chef::Log.info "Removing historic database role '#{database_role}' from user '#{user}' in database ''#{database_name}''"
 
                 sqlshell_ms_database_role "#{instance_key}-Remove '#{user}' from role '#{database_role}' in '#{database_name}'" do
@@ -277,7 +277,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
             user = row['user']
 
             if !database_config['users'][user]
-              if is_database_managed && delete_unmanaged_users
+              if is_database_managed || delete_unmanaged_users
                 Chef::Log.info "Removing historic user #{user} in #{database_name}"
 
                 sqlshell_ms_user "#{instance_key}-#{database_name}-#{user}" do
