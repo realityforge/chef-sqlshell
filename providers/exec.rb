@@ -23,12 +23,15 @@ action :run do
 
   extra_classpath = []
   new_resource.extra_classpath.each do |classpath_element|
-    local_classpath_element = "#{node.override['sqlshell']['lib']}/#{::File.basename(classpath_element)}"
-    extra_classpath << local_classpath_element
-
-    remote_file local_classpath_element do
-      source classpath_element
-      action :create_if_missing
+    if classpath_element =~ /^file\:\/\//
+      extra_classpath << classpath_element[7, classpath_element.length]
+    else
+      local_classpath_element = "#{node.override['sqlshell']['lib']}/#{::File.basename(classpath_element)}"
+      extra_classpath << local_classpath_element
+      remote_file local_classpath_element do
+        source classpath_element
+        action :create_if_missing
+      end
     end
   end
 
