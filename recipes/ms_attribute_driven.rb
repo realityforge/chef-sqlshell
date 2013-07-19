@@ -409,7 +409,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
       block do
         @sql_results.each do |row|
           database_name = row['name']
-          if value['databases'][database_name].nil?
+          if value['databases'].nil? || value['databases'][database_name].nil?
             if delete_unmanaged_databases
               Chef::Log.info "Removing historic database #{database_name}"
               sqlshell_ms_database "#{instance_key}-#{database_name}" do
