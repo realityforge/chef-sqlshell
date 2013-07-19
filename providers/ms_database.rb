@@ -25,7 +25,7 @@ action :create do
     jdbc_driver new_resource.jdbc_driver
     extra_classpath new_resource.extra_classpath
     jdbc_properties new_resource.jdbc_properties
-    command "USE [#{new_resource.database}]; #{create_user_sql}"
+    command create_user_sql
     not_if_sql database_exist_sql
   end
 
