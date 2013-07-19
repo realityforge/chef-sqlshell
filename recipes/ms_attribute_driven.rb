@@ -276,7 +276,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
           @sql_results.each do |row|
             user = row['user']
 
-            if database_config['users'][user]
+            if !database_config['users'][user]
               if is_database_managed && delete_unmanaged_users
                 Chef::Log.info "Removing historic user #{user} in #{database_name}"
 
