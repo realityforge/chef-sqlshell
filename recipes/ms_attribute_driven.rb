@@ -16,6 +16,14 @@
 
 include_recipe 'sqlshell::default'
 
+def sq_priority(value)
+  value.is_a?(Hash) && value['priority'] ? value['priority'] : 100
+end
+
+def sq_sort(hash)
+  Hash[hash.sort_by {|key, value| "#{"%04d" % sq_priority(value)}#{key}"}]
+end
+
 node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
   server_prefix = "sqlshell.sql_server.instances.#{instance_key}"
   jdbc_url = RealityForge::AttributeTools.ensure_attribute(value, 'jdbc.url', String, server_prefix)
@@ -31,7 +39,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
   delete_unmanaged_databases = value['delete_unmanaged_databases'].is_a?(TrueClass)
 
   if value['databases']
-    value['databases'].each_pair do |database_name, database_config|
+    sq_sort(value['databases']).each_pair do |database_name, database_config|
       sqlshell_ms_database "#{instance_key}-#{database_name}" do
         jdbc_url jdbc_url
         jdbc_driver jdbc_driver
@@ -47,7 +55,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
   end
 
   if value['logins']
-    value['logins'].each_pair do |login, login_config|
+    sq_sort(value['logins']).each_pair do |login, login_config|
       sqlshell_ms_login "#{instance_key}-#{login}" do
         jdbc_url jdbc_url
         jdbc_driver jdbc_driver
@@ -76,7 +84,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
   end
 
   if value['databases']
-    value['databases'].each_pair do |database_name, database_config|
+    sq_sort(value['databases']).each_pair do |database_name, database_config|
       database_prefix = "#{server_prefix}.databases.#{database_name}"
 
       is_database_managed = database_config['managed'].nil? ? false : database_config['managed']
@@ -110,7 +118,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
           end
 
           if user_config['permissions']
-            user_config['permissions'].each_pair do |permission_key, permission_config|
+            sq_sort(user_config['permissions']).each_pair do |permission_key, permission_config|
               permission_prefix = "#{user_prefix}.permissions.#{permission_key}"
               permission = RealityForge::AttributeTools.ensure_attribute(permission_config, 'permission', String, permission_prefix)
               securable_type = RealityForge::AttributeTools.ensure_attribute(permission_config, 'securable_type', String, permission_prefix)
