@@ -43,7 +43,7 @@ action :create do
     SQL
   end
 
-  update_recovery_sql = "ALTER DATABASE [#{new_resource.database}] COLLATE #{new_resource.collation} WITH NO_WAIT"
+  update_recovery_sql = "ALTER DATABASE [#{new_resource.database}] COLLATE #{new_resource.collation}"
   sqlshell_exec update_recovery_sql do
     jdbc_url new_resource.jdbc_url
     jdbc_driver new_resource.jdbc_driver
