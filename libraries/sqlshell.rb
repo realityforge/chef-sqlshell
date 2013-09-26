@@ -22,6 +22,8 @@ class Chef
 
       args = []
       args << '-cp' << classpath.join(::File::PATH_SEPARATOR)
+      args << "-Xms#{node['sqlshell']['java']['min_memory']}m"
+      args << "-Xmx#{node['sqlshell']['java']['max_memory']}m"
       args << 'org.realityforge.sqlshell.Main'
       args << '--database-driver' << new_resource.jdbc_driver
       args << '-f' << input_file
