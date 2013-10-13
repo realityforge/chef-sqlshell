@@ -20,14 +20,24 @@ The sqlshell cookbook installs the SqlShell binary and provides LWRPs to execute
 
 # Attributes
 
-* `node['sqlshell']['package']['version']` - The version of SqlShell to install. Defaults to `0.1`.
-* `node['sqlshell']['package']['url']` - The url to the omnibus SqlShell jar file. Defaults to `https://github.com/realityforge/repository/raw/master/org/realityforge/sqlshell/sqlshell/0.1/sqlshell-0.1-all.jar`.
-* `node['sqlshell']['sql_server']['instances']` - . Defaults to `{}`.
+* `node['sqlshell']['package']['version']` - SqlShell Version: The version of SqlShell to install. Defaults to `version`.
+* `node['sqlshell']['package']['url']` - SqlShell package url: The url to the omnibus SqlShell jar file. Defaults to `https://github.com/realityforge/repository/raw/master/org/realityforge/sqlshell/sqlshell/#{version}/sqlshell-#{version}-all.jar`.
+* `node['sqlshell']['java']['min_memory']` -  Defaults to `16`.
+* `node['sqlshell']['java']['max_memory']` -  Defaults to `40`.
+* `node['sqlshell']['sql_server']['instances']` - Configuration for 0 or more sql server instances. Defaults to `Mash.new`.
 
 # Recipes
 
-* sqlshell::default - Installs the SqlShell binaries
-* sqlshell::ms_attribute_driven - Configures 0 or more SQL Server instances
+* [sqlshell::default](#sqlshelldefault) - Installs the SqlShell binaries.
+* [sqlshell::ms_attribute_driven](#sqlshellms_attribute_driven) - Configures 0 or more SQL Server instances using the sqlshell/sql_server/instances attribute.
+
+## sqlshell::default
+
+Installs the SqlShell binaries.
+
+## sqlshell::ms_attribute_driven
+
+Configures 0 or more SQL Server instances using the sqlshell/sql_server/instances attribute.
 
 # Resources
 

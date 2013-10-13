@@ -14,6 +14,12 @@
 # limitations under the License.
 #
 
+=begin
+#<
+Installs the SqlShell binaries.
+#>
+=end
+
 include_recipe 'java::default'
 
 a = archive 'sqlshell' do

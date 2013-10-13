@@ -26,23 +26,3 @@ supports 'windows'
 depends 'cutlery'
 depends 'archive'
 depends 'java'
-
-recipe 'sqlshell::default', 'Installs the SqlShell binaries'
-recipe 'sqlshell::ms_attribute_driven', 'Configures 0 or more SQL Server instances'
-
-attribute 'sqlshell/package/version',
-  :display_name => 'SqlShell Version',
-  :description => 'The version of SqlShell to install',
-  :type => 'string',
-  :default => '0.1'
-
-attribute 'sqlshell/package/url',
-  :display_name => 'SqlShell package url',
-  :description => 'The url to the omnibus SqlShell jar file',
-  :type => 'string',
-  :default => 'https://github.com/realityforge/repository/raw/master/org/realityforge/sqlshell/sqlshell/0.1/sqlshell-0.1-all.jar'
-
-attribute 'sqlshell/sql_server/instances',
-  :display_name => 'Configuration for 0 or more sql server instances',
-  :type => 'hash',
-  :default => {}

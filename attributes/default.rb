@@ -15,9 +15,12 @@
 #
 
 version = '0.6'
+#<> SqlShell Version: The version of SqlShell to install.
 default['sqlshell']['package']['version'] = version
+#<> SqlShell package url: The url to the omnibus SqlShell jar file.
 default['sqlshell']['package']['url'] = "https://github.com/realityforge/repository/raw/master/org/realityforge/sqlshell/sqlshell/#{version}/sqlshell-#{version}-all.jar"
 default['sqlshell']['java']['min_memory'] = 16
 default['sqlshell']['java']['max_memory'] = 40
 
+#<> Configuration for 0 or more sql server instances
 default['sqlshell']['sql_server']['instances'] = Mash.new

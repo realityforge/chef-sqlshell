@@ -14,6 +14,12 @@
 # limitations under the License.
 #
 
+=begin
+#<
+Configures 0 or more SQL Server instances using the sqlshell/sql_server/instances attribute.
+#>
+=end
+
 include_recipe 'sqlshell::default'
 
 def sq_priority(value)
