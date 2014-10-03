@@ -31,15 +31,19 @@ def sq_sort(hash)
 end
 
 sq_sort(node['sqlshell']['sql_server']['instances']).each_pair do |instance_key, definition|
+  RealityForge::SqlServer.set_current_instance(node, instance_key)
   if definition['recipes'] && definition['recipes']['before']
     sq_sort(definition['recipes']['before']).each_pair do |recipe, config|
       Chef::Log.info "Including instance 'before' recipe '#{recipe}' Priority: #{sq_priority(config)}"
       include_recipe recipe
     end
   end
+  RealityForge::SqlServer.set_current_instance(node, nil)
 end
 
 node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
+  RealityForge::SqlServer.set_current_instance(node, instance_key)
+
   server_prefix = "sqlshell.sql_server.instances.#{instance_key}"
   jdbc_url = RealityForge::AttributeTools.ensure_attribute(value, 'jdbc.url', String, server_prefix)
   jdbc_driver = RealityForge::AttributeTools.ensure_attribute(value, 'jdbc.driver', String, server_prefix)
@@ -453,13 +457,16 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
       end
     end
   end
+  RealityForge::SqlServer.set_current_instance(node, nil)
 end
 
 sq_sort(node['sqlshell']['sql_server']['instances']).each_pair do |instance_key, definition|
+  RealityForge::SqlServer.set_current_instance(node, instance_key)
   if definition['recipes'] && definition['recipes']['after']
     sq_sort(definition['recipes']['after']).each_pair do |recipe, config|
       Chef::Log.info "Including instance 'after' recipe '#{recipe}' Priority: #{sq_priority(config)}"
       include_recipe recipe
     end
   end
+  RealityForge::SqlServer.set_current_instance(node, nil)
 end
