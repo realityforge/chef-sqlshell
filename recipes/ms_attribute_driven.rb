@@ -59,17 +59,20 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
 
   if value['databases']
     sq_sort(value['databases']).each_pair do |database_name, database_config|
-      sqlshell_ms_database "#{instance_key}-#{database_name}" do
-        jdbc_url jdbc_url
-        jdbc_driver jdbc_driver
-        extra_classpath extra_classpath
-        jdbc_properties jdbc_properties
+      is_database_managed = database_config['managed'].nil? ? false : database_config['managed']
+      if is_database_managed && !['master', 'msdb', 'model', 'tempdb'].include?(database_name)
+        sqlshell_ms_database "#{instance_key}-#{database_name}" do
+          jdbc_url jdbc_url
+          jdbc_driver jdbc_driver
+          extra_classpath extra_classpath
+          jdbc_properties jdbc_properties
 
-        database database_name
+          database database_name
 
-        recovery_model database_config['recovery_model'] if database_config['recovery_model']
-        collation database_config['collation'] if database_config['collation']
-      end unless ['master', 'msdb', 'model', 'tempdb'].include?(database_name)
+          recovery_model database_config['recovery_model'] if database_config['recovery_model']
+          collation database_config['collation'] if database_config['collation']
+        end
+      end
     end
   end
 
