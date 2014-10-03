@@ -50,11 +50,11 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
   extra_classpath = RealityForge::AttributeTools.ensure_attribute(value, 'jdbc.extra_classpath', Array, server_prefix)
   jdbc_properties = RealityForge::AttributeTools.ensure_attribute(value, 'jdbc.properties', Hash, server_prefix)
 
-  delete_unmanaged_permissions = !value['delete_unmanaged_permissions'].is_a?(FalseClass)
-  delete_unmanaged_database_roles = !value['delete_unmanaged_database_roles'].is_a?(FalseClass)
-  delete_unmanaged_users = !value['delete_unmanaged_users'].is_a?(FalseClass)
-  delete_unmanaged_server_roles = !value['delete_unmanaged_server_roles'].is_a?(FalseClass)
-  delete_unmanaged_logins = !value['delete_unmanaged_logins'].is_a?(FalseClass)
+  delete_unmanaged_permissions = value['delete_unmanaged_permissions'].is_a?(TrueClass)
+  delete_unmanaged_database_roles = value['delete_unmanaged_database_roles'].is_a?(TrueClass)
+  delete_unmanaged_users = value['delete_unmanaged_users'].is_a?(TrueClass)
+  delete_unmanaged_server_roles = value['delete_unmanaged_server_roles'].is_a?(TrueClass)
+  delete_unmanaged_logins = value['delete_unmanaged_logins'].is_a?(TrueClass)
   delete_unmanaged_databases = value['delete_unmanaged_databases'].is_a?(TrueClass)
 
   if value['databases']
