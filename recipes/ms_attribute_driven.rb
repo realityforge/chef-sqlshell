@@ -157,7 +157,7 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
                 securable_type securable_type
                 securable securable
                 permission permission
-                action permission_action.to_sym if permission_action
+                action permission_action.downcase.to_sym if permission_action
               end
             end
           end
