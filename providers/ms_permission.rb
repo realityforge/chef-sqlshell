@@ -15,7 +15,8 @@
 use_inline_resources
 
 def is_permission_present_sql(state)
-  <<-SQL
+  sql =
+    <<-SQL
       SELECT
         U.name, P.class_desc, P.permission_name, P.state_desc, O.name, S.name
       FROM
