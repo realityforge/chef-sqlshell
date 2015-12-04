@@ -21,7 +21,7 @@ class RealityForge #nodoc
       #
       def get_current_instance(node)
         instance = node.run_state['sql_server_instance']
-        raise 'No broker instance specified' unless instance
+        raise 'No sql server instance specified' unless instance
         instance
       end
 
