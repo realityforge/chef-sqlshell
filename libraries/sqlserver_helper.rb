@@ -25,7 +25,7 @@ class RealityForge #nodoc
         instance
       end
 
-      # Set the current broker instance.
+      # Set the current sql server instance.
       #
       def set_current_instance(node, instance)
         node.run_state['sql_server_instance'] = instance
