@@ -143,9 +143,9 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
             sq_sort(user_config['permissions']).each_pair do |permission_key, permission_config|
               permission_prefix = "#{user_prefix}.permissions.#{permission_key}"
               permission = RealityForge::AttributeTools.ensure_attribute(permission_config, 'permission', String, permission_prefix)
-              securable_type = RealityForge::AttributeTools.ensure_attribute(permission_config, 'securable_type', String, permission_prefix)
-              securable = permission_config['securable'] ? RealityForge::AttributeTools.ensure_attribute(permission_config, 'securable', String, permission_prefix) : nil
-              permission_action = permission_config['permission_action'] ? RealityForge::AttributeTools.ensure_attribute(permission_config, 'permission_action', String, permission_prefix) : nil
+              securable_type = RealityForge::AttributeTools.get_attribute(permission_config, 'securable_type', String, permission_prefix)
+              securable = RealityForge::AttributeTools.get_attribute(permission_config, 'securable', String, permission_prefix)
+              permission_action = RealityForge::AttributeTools.get_attribute(permission_config, 'permission_action', String, permission_prefix)
 
               sqlshell_ms_permission "#{instance_key}-#{database_name}-#{permission_action} #{permission} TO #{user} ON #{securable_type}::#{securable || database_name}" do
                 jdbc_url jdbc_url

@@ -76,7 +76,7 @@ attribute :user, :kind_of => String, :required => true
 #<> @attribute database The database in which to create the user.
 attribute :database, :kind_of => String, :required => true
 #<> @attribute securable_type The type of the securable.
-attribute :securable_type, :equal_to => ['DATABASE','OBJECT','TYPE'], :required => true
+attribute :securable_type, :equal_to => [nil, 'DATABASE','OBJECT','TYPE'], :default => nil
 #<> @attribute securable The name of the securable element.
 attribute :securable, :kind_of => [String, NilClass], :default => nil
 #<> @attribute permission The type of the permission.
@@ -101,6 +101,11 @@ attribute :jdbc_properties, :kind_of => Hash, :default => {}
 default_action :grant
 
 def resolved_securable
+  if securable_type.nil?
+    raise "Must not specify securable if securable_type is nil" if securable
+    return nil
+  end
+
   unless @resolved_securable
     if securable_type == 'DATABASE'
       raise "Must not specify securable if securable_type is DATABASE" if securable

@@ -29,14 +29,19 @@ def is_permission_present_sql(state)
         U.name = '#{new_resource.user}' AND
         P.class_desc = '#{new_resource.securable_type_class_desc}' AND
         P.permission_name = '#{new_resource.permission}' AND
-        #{state ? "P.state_desc = '#{state}' AND" : ''}
+  SQL
+  sql += " #{state ? "P.state_desc = '#{state}' AND" : ''}\n"
+
+  sql += <<-SQL unless new_resource.securable_type.nil?
         COALESCE(O.name,T.name,'#{new_resource.database}') = '#{new_resource.securable_name}' AND
         COALESCE(S.name,'#{new_resource.database}') = '#{new_resource.securable_schema}'
   SQL
+  sql
 end
 
 def action_sql(action)
-  "#{action} #{new_resource.permission} ON #{new_resource.securable_type}::#{new_resource.quoted_securable} TO [#{new_resource.user}]"
+  on_statement = new_resource.securable_type.nil? ? '' : " ON #{new_resource.securable_type}::#{new_resource.quoted_securable}"
+  "#{action} #{new_resource.permission}#{on_statement} TO [#{new_resource.user}]"
 end
 
 action :grant do
