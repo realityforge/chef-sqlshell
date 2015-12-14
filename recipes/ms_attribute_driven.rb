@@ -195,10 +195,10 @@ node['sqlshell']['sql_server']['instances'].each_pair do |instance_key, value|
             if user_config['permissions']
               user_config['permissions'].values.each do |permission_config|
                 permission_action = (permission_config['permission_action'] || 'grant').upcase
-                securable_type = permission_config['securable_type'] == 'OBJECT' ? 'OBJECT_OR_COLUMN' : permission_config['securable_type']
+                securable_type = (permission_config['securable_type'] == 'OBJECT' ? 'OBJECT_OR_COLUMN' : permission_config['securable_type']) || 'DATABASE'
                 permission = permission_config['permission']
                 securable = permission_config['securable'] ? permission_config['securable'].gsub('[','').gsub(']','') : database_name
-                permissions << "#{user}-#{permission}-#{securable_type}-#{securable}-#{permission_action}".downcase
+                permissions << "#{user}-#{permission}-#{securable_type}-#{securable || database_name}-#{permission_action}".downcase
               end
             end
           end
