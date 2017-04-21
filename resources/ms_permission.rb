@@ -85,7 +85,7 @@ attribute :permission,
             [
               'BACKUP DATABASE', 'BACKUP LOG', 'CREATE DATABASE', 'CREATE DEFAULT', 'CREATE FUNCTION',
               'CREATE PROCEDURE', 'CREATE RULE', 'CREATE TABLE', 'CREATE VIEW',
-              'EXECUTE', 'REFERENCES', 'DELETE', 'INSERT', 'UPDATE', 'SELECT', 'CONNECT'
+              'EXECUTE', 'REFERENCES', 'DELETE', 'INSERT', 'UPDATE', 'SELECT', 'CONNECT', 'ALTER'
             ],
           :required => true
 
