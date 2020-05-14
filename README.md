@@ -1,6 +1,6 @@
 # Description
 
-[![Build Status](https://api.travis-ci.com/realityforge/chef-sqlshell.svg?branch=master)](http://travis-ci.org/realityforge/chef-sqlshell)
+[![Build Status](https://api.travis-ci.com/realityforge/chef-sqlshell.svg?branch=master)](http://travis-ci.com/realityforge/chef-sqlshell)
 
 The sqlshell cookbook installs the SqlShell binary and provides LWRPs to execute the tool.
 
